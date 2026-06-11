@@ -238,7 +238,7 @@ export default function Roster() {
               className="companion-card"
               onClick={() => setSelectedProfile(companion)}
             >
-              <img src={companion.avatarUrl} alt={companion.name} className="avatar" />
+              <img src={companion.avatarUrl} alt={companion.name} className="avatar" loading="lazy" />
               <h3>{companion.name}</h3>
               <div className="tags">
                 {companion.role && companion.role.map(r => (
@@ -259,7 +259,7 @@ export default function Roster() {
         <div className="modal-overlay" onClick={() => setSelectedProfile(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <button className="close-btn" onClick={() => setSelectedProfile(null)}>关闭</button>
-            <img src={selectedProfile.avatarUrl} alt={selectedProfile.name} className="modal-avatar" />
+            <img src={selectedProfile.avatarUrl} alt={selectedProfile.name} className="modal-avatar" loading="lazy" />
             <h2>{selectedProfile.name}</h2>
             
             <div className="modal-details">
