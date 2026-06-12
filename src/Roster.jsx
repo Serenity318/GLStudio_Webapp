@@ -7,6 +7,7 @@ const mockCompanions = [
     name: "GL.小炸弹", 
     gender: "女生", 
     role: ["娱乐陪"],
+    basePrice: "15币/时",
     age: 21, 
     location: "KL", 
     zodiac: "魔蝎座", 
@@ -22,6 +23,7 @@ const mockCompanions = [
     name: "GL.小k", 
     gender: "男生", 
     role: ["娱乐陪"],
+    basePrice: "15币/时",
     age: 18, 
     location: "Johor", 
     zodiac: "魔蝎座", 
@@ -37,6 +39,7 @@ const mockCompanions = [
     name: "GL.阿泽", 
     gender: "男生", 
     role: ["娱乐陪"],
+    basePrice: "15币/时",
     age: 23, 
     location: "SLG", 
     zodiac: "天秤座", 
@@ -52,6 +55,7 @@ const mockCompanions = [
     name: "GL.念念", 
     gender: "女生", 
     role: ["娱乐陪"],
+    basePrice: "15币/时",
     age: 18, 
     location: "KL", 
     zodiac: "金牛座", 
@@ -67,6 +71,7 @@ const mockCompanions = [
     name: "GL.幻", 
     gender: "女生", 
     role: ["娱乐陪"],
+    basePrice: "15币/时",
     age: 20, 
     location: "KL", 
     zodiac: "处女座", 
@@ -82,6 +87,7 @@ const mockCompanions = [
     name: "GL.小松", 
     gender: "女生", 
     role: ["娱乐陪"],
+    basePrice: "15币/时",
     location: "KL", 
     zodiac: "天秤座", 
     tags: ["温柔", "腼腆"], 
@@ -96,6 +102,7 @@ const mockCompanions = [
     name: "GL.蜡笔", 
     gender: "女生", 
     role: ["娱乐陪"],
+    basePrice: "15币/时",
     age: 20, 
     location: "KL", 
     zodiac: "白羊座", 
@@ -111,6 +118,7 @@ const mockCompanions = [
     name: "GL.无惧", 
     gender: "男生", 
     role: ["技术陪", "包赢陪"],
+    basePrice: "详询客服",
     age: 20, 
     location: "Selangor", 
     zodiac: "天秤座", 
@@ -126,6 +134,7 @@ const mockCompanions = [
     name: "GL.小初", 
     gender: "男生", 
     role: ["技术陪"],
+    basePrice: "18币/时",
     age: 22, 
     location: "霹雳", 
     zodiac: "巨蟹座", 
@@ -141,6 +150,7 @@ const mockCompanions = [
     name: "GL.熙", 
     gender: "男生", 
     role: ["技娱陪"],
+    basePrice: "20币/时",
     age: 19, 
     location: "KL", 
     zodiac: "金牛座", 
@@ -240,6 +250,7 @@ export default function Roster() {
             >
               <img src={companion.avatarUrl} alt={companion.name} className="avatar" loading="lazy" />
               <h3>{companion.name}</h3>
+              {companion.basePrice && <div className="base-price">{companion.basePrice}</div>}
               <div className="tags">
                 {companion.role && companion.role.map(r => (
                   <span key={r} className="tag-pill role-pill">{r}</span>
@@ -298,6 +309,13 @@ export default function Roster() {
               <strong>语音介绍:</strong>
               <audio controls src={selectedProfile.audioUrl} />
             </div>
+
+            <button 
+              className="cta-btn"
+              onClick={() => window.open('https://wa.me/6586180022?text=' + encodeURIComponent(`你好，我想了解/预约陪玩：${selectedProfile.name}`), '_blank')}
+            >
+              联系客服下单 / 了解最新活动
+            </button>
           </div>
         </div>
       )}
