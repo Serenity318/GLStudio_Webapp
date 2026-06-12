@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Roster.css';
 
 const mockCompanions = [
@@ -164,90 +164,79 @@ const mockCompanions = [
 ];
 
 export default function Roster() {
-  const [genderFilter, setGenderFilter] = useState('全部');
-  const [roleFilter, setRoleFilter] = useState('全部');
-  const [gameFilter, setGameFilter] = useState('全部');
-  const [serviceFilter, setServiceFilter] = useState('全部');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedProfile, setSelectedProfile] = useState(null);
+  
+  const [sharedIds, setSharedIds] = useState(null);
+  const [selectedCompanions, setSelectedCompanions] = useState([]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareParam = urlParams.get('share');
+    if (shareParam) {
+      setSharedIds(shareParam.split(',').map(Number));
+    }
+  }, []);
+
+  const isCustomerView = sharedIds !== null;
+
+  const toggleSelection = (e, id) => {
+    e.stopPropagation();
+    setSelectedCompanions(prev => 
+      prev.includes(id) ? prev.filter(compId => compId !== id) : [...prev, id]
+    );
+  };
+
+  const generateShareLink = () => {
+    if (selectedCompanions.length === 0) {
+      alert("请先选择至少一位陪玩！");
+      return;
+    }
+    const shareUrl = `${window.location.origin}${window.location.pathname}?share=${selectedCompanions.join(',')}`;
+    navigator.clipboard.writeText(shareUrl);
+    alert("链接已复制！请发给老板/顾客。");
+  };
 
   const filteredCompanions = mockCompanions.filter(companion => {
-    const matchesGender = genderFilter === '全部' || companion.gender === genderFilter;
-    const matchesRole = roleFilter === '全部' || (companion.role && companion.role.includes(roleFilter));
-    const matchesGame = gameFilter === '全部' || (companion.games && companion.games.includes(gameFilter));
-    const matchesService = serviceFilter === '全部' || (companion.services && companion.services.includes(serviceFilter));
-    
-    return matchesGender && matchesRole && matchesGame && matchesService;
+    if (isCustomerView) {
+      return sharedIds.includes(companion.id);
+    }
+    return companion.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   return (
     <div className="roster-container">
-      <h2>游戏陪玩名录</h2>
+      <h2>{isCustomerView ? "为您推荐的陪玩" : "游戏陪玩名录 (客服视图)"}</h2>
       
-      <div className="filters">
-        <label>
-          性别:
-          <select value={genderFilter} onChange={e => setGenderFilter(e.target.value)}>
-            <option value="全部">全部</option>
-            <option value="男生">男生</option>
-            <option value="女生">女生</option>
-          </select>
-        </label>
-
-        <label>
-          岗位:
-          <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
-            <option value="全部">全部</option>
-            <option value="娱乐陪">娱乐陪</option>
-            <option value="技术陪">技术陪</option>
-            <option value="技娱陪">技娱陪</option>
-            <option value="包赢陪">包赢陪</option>
-          </select>
-        </label>
-
-        <label>
-            游戏:
-            <select value={gameFilter} onChange={e => setGameFilter(e.target.value)}>
-              <option value="全部">全部</option>
-              <option value="王者荣耀">王者荣耀</option>
-              <option value="Honor of Kings">Honor of Kings</option>
-              <option value="和平精英">和平精英</option>
-              <option value="PUBG">PUBG</option>
-              <option value="Valorant （手瓦）">Valorant （手瓦）</option>
-              <option value="三角洲（手游）">三角洲（手游）</option>
-              <option value="MLBB">MLBB</option>
-              <option value="COD">COD</option>
-              <option value="Valorant （端瓦）">Valorant （端瓦）</option>
-              <option value="永劫无间">永劫无间</option>
-              <option value="三角洲（端游）">三角洲（端游）</option>
-              <option value="CSGO">CSGO</option>
-            </select>
-          </label>
-
-        <label>
-          服务:
-            <select value={serviceFilter} onChange={e => setServiceFilter(e.target.value)}>
-              <option value="全部">全部</option>
-              <option value="陪聊">文字聊天 (陪聊)</option>
-              <option value="语音">语音 / 语音条聊天</option>
-              <option value="虚拟恋人">虚拟恋人</option>
-              <option value="叫醒">早安提醒 / 叫醒服务</option>
-              <option value="哄睡">睡前陪伴 / 哄睡服务</option>
-              <option value="挂睡">挂睡陪伴 / 挂睡服务</option>
-              <option value="陪看戏">观影陪伴 / 陪看戏服务</option>
-              <option value="树洞">倾诉陪伴 / 树洞服务</option>
-              <option value="头像">顾客指定换头像服务</option>
-            </select>
-          </label>
-      </div>
+      {!isCustomerView && (
+        <div className="search-container">
+          <input 
+            type="text" 
+            className="search-bar"
+            placeholder="输入陪陪名字搜索 (e.g. 熙, 小k)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      )}
 
       <div className="companion-list">
         {filteredCompanions.length > 0 ? (
           filteredCompanions.map(companion => (
             <div 
               key={companion.id} 
-              className="companion-card"
+              className={`companion-card ${selectedCompanions.includes(companion.id) ? 'selected' : ''}`}
               onClick={() => setSelectedProfile(companion)}
             >
+              {!isCustomerView && (
+                <input 
+                  type="checkbox" 
+                  className="card-checkbox"
+                  checked={selectedCompanions.includes(companion.id)}
+                  onChange={(e) => toggleSelection(e, companion.id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
               <img src={companion.avatarUrl} alt={companion.name} className="avatar" loading="lazy" />
               <h3>{companion.name}</h3>
               {companion.basePrice && <div className="base-price">{companion.basePrice}</div>}
@@ -317,6 +306,14 @@ export default function Roster() {
               Instagram 下单
             </button>
           </div>
+        </div>
+      )}
+
+      {!isCustomerView && (
+        <div className="fixed-action-bar">
+          <button className="share-btn" onClick={generateShareLink}>
+            复制专属链接
+          </button>
         </div>
       )}
     </div>
