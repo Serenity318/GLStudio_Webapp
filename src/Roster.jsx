@@ -201,7 +201,10 @@ export default function Roster() {
     if (isCustomerView) {
       return sharedIds.includes(companion.id);
     }
-    return companion.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const query = searchQuery.toLowerCase();
+    const nameMatch = companion.name.toLowerCase().includes(query);
+    const gameMatch = companion.games && companion.games.some(game => game.toLowerCase().includes(query));
+    return nameMatch || gameMatch;
   });
 
   return (
@@ -213,7 +216,7 @@ export default function Roster() {
           <input 
             type="text" 
             className="search-bar"
-            placeholder="输入陪陪名字搜索 (e.g. 熙, 小k)..."
+            placeholder="输入陪陪名字或游戏搜索 (e.g. 熙, Valorant)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
