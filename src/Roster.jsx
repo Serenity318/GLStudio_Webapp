@@ -312,9 +312,9 @@ export default function Roster() {
 
             <button 
               className="cta-btn"
-              onClick={() => window.open('https://wa.me/6586180022?text=' + encodeURIComponent(`你好，我想了解/预约陪玩：${selectedProfile.name}`), '_blank')}
+              onClick={() => window.open('https://www.instagram.com/gl.gamingstudio/', '_blank')}
             >
-              联系客服下单 / 了解最新活动
+              Instagram 下单
             </button>
           </div>
         </div>
