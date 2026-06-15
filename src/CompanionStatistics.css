@@ -1,0 +1,68 @@
+.cs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Header Area */
+.cs-header-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.cs-header-area h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827; /* Dark text */
+  margin: 0;
+}
+
+.cs-header-area p {
+  font-size: 0.875rem;
+  color: #6b7280; /* Muted gray text */
+  margin: 0;
+}
+
+/* Data Table */
+.cs-table-container {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.cs-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.cs-table th {
+  padding: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.cs-table td {
+  padding: 16px;
+  font-size: 0.875rem;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cs-table tr:last-child td {
+  border-bottom: none;
+}
+
+.cs-empty-state {
+  text-align: center;
+  padding: 64px !important;
+  color: #9ca3af !important;
+  font-size: 0.875rem;
+}

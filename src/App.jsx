@@ -1,10 +1,10 @@
-import Roster from './Roster';
+import AdminDashboard from './AdminDashboard';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <Roster />
+      <AdminDashboard />
     </div>
   );
 }

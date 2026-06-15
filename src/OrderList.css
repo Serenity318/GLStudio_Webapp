@@ -1,0 +1,122 @@
+.ol-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Header Area */
+.ol-header-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ol-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ol-header-left h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827; /* Dark text */
+  margin: 0;
+}
+
+.ol-header-left p {
+  font-size: 0.875rem;
+  color: #6b7280; /* Muted text */
+  margin: 0;
+}
+
+.ol-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ol-filter-select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #374151;
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.ol-filter-select:focus {
+  border-color: #0284c7;
+}
+
+.ol-create-btn {
+  background-color: #111827;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ol-create-btn:hover {
+  background-color: #374151;
+}
+
+/* Data Table */
+.ol-table-container {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.ol-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.ol-table th {
+  padding: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280; /* Muted gray text */
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.ol-table td {
+  padding: 16px;
+  font-size: 0.875rem;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ol-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ol-empty-state {
+  text-align: center;
+  padding: 64px !important;
+  color: #9ca3af !important;
+  font-size: 0.875rem;
+}
+
+.ol-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
