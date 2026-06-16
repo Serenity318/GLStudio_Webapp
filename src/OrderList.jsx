@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import './OrderList.css';
 
-const OrderList = ({ onNavigateToCreateOrder }) => {
+const OrderList = ({ currentUser, onNavigateToCreateOrder }) => {
   const [orders, setOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('全部状态');
   const [sourceFilter, setSourceFilter] = useState('全部来源');
@@ -115,28 +115,44 @@ const OrderList = ({ onNavigateToCreateOrder }) => {
                   <td>{order.source}</td>
                   <td>¥{order.amount}</td>
                   <td>
-                    <select
-                      value={order.status || '待付款'}
-                      onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      className="ol-status-badge"
-                      style={{
-                        backgroundColor: '#e6f2ff',
-                        color: '#007bff',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        border: 'none',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="待付款">待付款</option>
-                      <option value="已付款">已付款</option>
-                      <option value="进行中">进行中</option>
-                      <option value="已完成">已完成</option>
-                      <option value="已取消">已取消</option>
-                    </select>
+                    {currentUser?.role === 'admin' ? (
+                      <select
+                        value={order.status || '待付款'}
+                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                        className="ol-status-badge"
+                        style={{
+                          backgroundColor: '#e6f2ff',
+                          color: '#007bff',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="待付款">待付款</option>
+                        <option value="已付款">已付款</option>
+                        <option value="进行中">进行中</option>
+                        <option value="已完成">已完成</option>
+                        <option value="已取消">已取消</option>
+                      </select>
+                    ) : (
+                      <span 
+                        className="ol-status-badge"
+                        style={{
+                          backgroundColor: '#e6f2ff',
+                          color: '#007bff',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '500'
+                        }}
+                      >
+                        {order.status || '待付款'}
+                      </span>
+                    )}
                   </td>
                   <td>{order.creator || 'admin'}</td>
                   <td>{new Date(order.created_at).toLocaleString()}</td>
