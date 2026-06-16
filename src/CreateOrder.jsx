@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import './CreateOrder.css';
 
 const generateOrderId = () => {
@@ -10,7 +11,7 @@ const generateOrderId = () => {
   return `PP${year}${month}${day}${randomStr}`;
 };
 
-const CreateOrder = () => {
+const CreateOrder = ({ setCurrentView }) => {
   const [formData, setFormData] = useState({
     orderId: '',
     customerName: '',
@@ -23,9 +24,74 @@ const CreateOrder = () => {
     remarks: ''
   });
 
+  const [availableCompanions, setAvailableCompanions] = useState([]);
+  const [selectedCompanion, setSelectedCompanion] = useState(null);
+
   useEffect(() => {
     setFormData(prev => ({ ...prev, orderId: generateOrderId() }));
+    
+    const fetchCompanions = async () => {
+      const { data, error } = await supabase.from('companions').select('*');
+      if (error) {
+        console.error('Error fetching companions:', error);
+      } else if (data) {
+        setAvailableCompanions(data);
+      }
+    };
+    fetchCompanions();
   }, []);
+
+  const handleCompanionSelect = (comp) => {
+    setSelectedCompanion(comp);
+    setFormData(prev => ({ ...prev, companionShare: comp.commission_rate || 70 }));
+  };
+
+  const handleSubmitOrder = async () => {
+    if (!formData.amount || Number(formData.amount) === 0) {
+      alert("请输入订单金额");
+      return;
+    }
+    if (!selectedCompanion) {
+      alert("请选择陪陪");
+      return;
+    }
+
+    const { error } = await supabase.from('orders').insert([{
+      id: formData.orderId,
+      customer_name: formData.customerName,
+      service_type: formData.serviceType,
+      project_name: formData.projectName,
+      source: formData.orderSource,
+      amount: Number(formData.amount) || 0,
+      companion_share: Number(formData.companionShare),
+      club_share: Number(formData.clubShare),
+      remarks: formData.remarks,
+      companion_name: selectedCompanion.name
+    }]);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    if (setCurrentView) {
+      setCurrentView('orders');
+    }
+
+    // Reset form
+    setFormData({
+      orderId: generateOrderId(),
+      customerName: '',
+      serviceType: '陪玩',
+      projectName: '王者荣耀',
+      orderSource: 'Facebook',
+      amount: '',
+      companionShare: 70,
+      clubShare: 30,
+      remarks: ''
+    });
+    setSelectedCompanion(null);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -163,12 +229,35 @@ const CreateOrder = () => {
         {/* Card 2: Select Companions */}
         <section className="co-card">
           <div className="co-card-header">
-            <h2>选择陪陪（可多选，可不选）</h2>
+            <h2>选择陪陪</h2>
           </div>
           <div className="co-card-body">
-            <div className="co-empty-state">
-              暂无陪陪
-            </div>
+            {availableCompanions.length === 0 ? (
+              <div className="co-empty-state">
+                暂无陪陪
+              </div>
+            ) : (
+              <div className="co-companion-list" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {availableCompanions.map(comp => (
+                  <div 
+                    key={comp.id} 
+                    onClick={() => handleCompanionSelect(comp)}
+                    style={{
+                      padding: '10px 15px',
+                      border: selectedCompanion?.id === comp.id ? '2px solid #007bff' : '1px solid #ccc',
+                      backgroundColor: selectedCompanion?.id === comp.id ? '#e6f2ff' : '#fff',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      color: '#333',
+                      fontWeight: selectedCompanion?.id === comp.id ? 'bold' : 'normal'
+                    }}
+                  >
+                    {comp.name}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </div>
@@ -179,7 +268,7 @@ const CreateOrder = () => {
           <span className="co-amount-label">订单金额</span>
           <span className="co-amount-value">¥{displayAmount}</span>
         </div>
-        <button className="co-submit-btn">
+        <button className="co-submit-btn" onClick={handleSubmitOrder}>
           创建订单
         </button>
       </div>

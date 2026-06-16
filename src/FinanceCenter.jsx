@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import './FinanceCenter.css';
 
 // SVG Icons
@@ -27,6 +28,55 @@ const WalletIcon = () => (
 );
 
 const FinanceCenter = () => {
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [platformProfit, setPlatformProfit] = useState(0);
+  const [pendingSalary, setPendingSalary] = useState(0);
+
+  useEffect(() => {
+    const fetchFinancialData = async () => {
+      try {
+        const { data, error } = await supabase.from('orders').select('*');
+        if (error) {
+          console.error("Error fetching financial data:", error);
+          return;
+        }
+
+        if (data) {
+          const validOrders = data.filter(order => order.status !== '已取消');
+
+          let revenue = 0;
+          let profit = 0;
+          let salary = 0;
+
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+
+          validOrders.forEach(order => {
+            const amount = Number(order.amount) || 0;
+            revenue += amount;
+
+            const clubShare = Number(order.club_share) || 0;
+            profit += amount * (clubShare / 100);
+
+            const orderDate = new Date(order.created_at);
+            if (orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear) {
+              const compShare = Number(order.companion_share) || 0;
+              salary += amount * (compShare / 100);
+            }
+          });
+
+          setTotalRevenue(revenue);
+          setPlatformProfit(profit);
+          setPendingSalary(salary);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching financial data:", err);
+      }
+    };
+
+    fetchFinancialData();
+  }, []);
+
   return (
     <div className="fc-container">
       {/* Header Area */}
@@ -40,7 +90,7 @@ const FinanceCenter = () => {
         <div className="fc-stat-card">
           <div className="fc-stat-content">
             <h3 className="fc-stat-title">总营业额</h3>
-            <div className="fc-stat-value">¥0.00</div>
+            <div className="fc-stat-value">¥{totalRevenue.toFixed(2)}</div>
           </div>
           <div className="fc-stat-icon-wrapper bg-light-blue text-blue">
             <TrendUpIcon />
@@ -50,7 +100,7 @@ const FinanceCenter = () => {
         <div className="fc-stat-card">
           <div className="fc-stat-content">
             <h3 className="fc-stat-title">平台利润</h3>
-            <div className="fc-stat-value">¥0.00</div>
+            <div className="fc-stat-value">¥{platformProfit.toFixed(2)}</div>
           </div>
           <div className="fc-stat-icon-wrapper bg-light-green text-green">
             <CoinsIcon />
@@ -60,7 +110,7 @@ const FinanceCenter = () => {
         <div className="fc-stat-card">
           <div className="fc-stat-content">
             <h3 className="fc-stat-title">本月待发工资</h3>
-            <div className="fc-stat-value">¥0.00</div>
+            <div className="fc-stat-value">¥{pendingSalary.toFixed(2)}</div>
           </div>
           <div className="fc-stat-icon-wrapper bg-light-orange text-orange">
             <WalletIcon />

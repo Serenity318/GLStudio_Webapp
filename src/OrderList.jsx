@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import './OrderList.css';
 
 const OrderList = ({ onNavigateToCreateOrder }) => {
@@ -6,13 +7,49 @@ const OrderList = ({ onNavigateToCreateOrder }) => {
   const [statusFilter, setStatusFilter] = useState('全部状态');
   const [sourceFilter, setSourceFilter] = useState('全部来源');
 
+  const fetchOrders = async () => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error(error);
+    } else {
+      setOrders(data || []);
+    }
+  };
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+    if (error) {
+      alert(error.message);
+    } else {
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const filteredOrders = orders.filter(order => {
+    const matchStatus = statusFilter === '全部状态' || order.status === statusFilter;
+    const matchSource = sourceFilter === '全部来源' || order.source === sourceFilter;
+    return matchStatus && matchSource;
+  });
+
   return (
     <div className="ol-container">
       {/* Header Area */}
       <header className="ol-header-area">
         <div className="ol-header-left">
           <h1>订单列表</h1>
-          <p>共 {orders.length} 条订单</p>
+          <p>共 {filteredOrders.length} 条订单</p>
         </div>
         <div className="ol-header-right">
           <select 
@@ -63,23 +100,46 @@ const OrderList = ({ onNavigateToCreateOrder }) => {
             </tr>
           </thead>
           <tbody>
-            {orders.length === 0 ? (
+            {filteredOrders.length === 0 ? (
               <tr>
                 <td colSpan="8" className="ol-empty-state">
                   暂无订单
                 </td>
               </tr>
             ) : (
-              orders.map(order => (
+              filteredOrders.map(order => (
                 <tr key={order.id}>
-                  <td>{order.orderId}</td>
-                  <td>{order.customerName}</td>
-                  <td>{order.type} / {order.project}</td>
+                  <td>{order.id}</td>
+                  <td>{order.customer_name}</td>
+                  <td>{order.service_type} / {order.project_name}</td>
                   <td>{order.source}</td>
                   <td>¥{order.amount}</td>
-                  <td><span className="ol-status-badge">{order.status}</span></td>
-                  <td>{order.creator}</td>
-                  <td>{order.createdAt}</td>
+                  <td>
+                    <select
+                      value={order.status || '待付款'}
+                      onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                      className="ol-status-badge"
+                      style={{
+                        backgroundColor: '#e6f2ff',
+                        color: '#007bff',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        border: 'none',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="待付款">待付款</option>
+                      <option value="已付款">已付款</option>
+                      <option value="进行中">进行中</option>
+                      <option value="已完成">已完成</option>
+                      <option value="已取消">已取消</option>
+                    </select>
+                  </td>
+                  <td>{order.creator || 'admin'}</td>
+                  <td>{new Date(order.created_at).toLocaleString()}</td>
                 </tr>
               ))
             )}

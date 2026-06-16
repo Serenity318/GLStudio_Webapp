@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import './CompanionManagement.css';
 
 const CloseIcon = () => (
@@ -11,34 +12,84 @@ const CloseIcon = () => (
 const CompanionManagement = () => {
   const [companions, setCompanions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCompanionId, setEditingCompanionId] = useState(null);
 
   // Form states
-  const [formData, setFormData] = useState({
-    name: '',
-    service: '',
-    price: '',
-    commission: ''
-  });
+  const [newCompanionName, setNewCompanionName] = useState('');
+  const [newCompanionGames, setNewCompanionGames] = useState('');
+  const [newCompanionPrice, setNewCompanionPrice] = useState('');
+  const [newCompanionCommission, setNewCompanionCommission] = useState('70');
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingCompanionId(null);
+    setNewCompanionName('');
+    setNewCompanionGames('');
+    setNewCompanionPrice('');
+    setNewCompanionCommission('70');
   };
 
-  const handleSave = () => {
-    // Add to state if basic validation passes
-    if (formData.name && formData.service && formData.price && formData.commission) {
-      setCompanions(prev => [...prev, { 
-        id: Date.now(), 
-        ...formData, 
-        status: '在线' 
-      }]);
-      setFormData({ name: '', service: '', price: '', commission: '' });
-      setIsModalOpen(false);
-    } else {
-      // In a real app we might show an error, but for the MVP we will just close or wait
-      setIsModalOpen(false);
+  const handleEditClick = (companion) => {
+    setNewCompanionName(companion.name);
+    setNewCompanionGames(companion.games);
+    setNewCompanionPrice(companion.price);
+    setNewCompanionCommission(companion.commission_rate);
+    setEditingCompanionId(companion.id);
+    setIsModalOpen(true);
+  };
+
+  const fetchCompanions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('companions')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      if (data) setCompanions(data);
+    } catch (error) {
+      console.error('Error fetching companions:', error);
     }
+  };
+
+  useEffect(() => {
+    fetchCompanions();
+  }, []);
+
+  const handleAddCompanion = async () => {
+    if (!newCompanionName.trim()) {
+      alert('请输入姓名');
+      return;
+    }
+
+    let error;
+
+    if (editingCompanionId) {
+      const { error: updateError } = await supabase.from('companions').update({
+        name: newCompanionName,
+        games: newCompanionGames,
+        price: Number(newCompanionPrice) || 0,
+        commission_rate: Number(newCompanionCommission) || 70
+      }).eq('id', editingCompanionId);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase.from('companions').insert([{
+        name: newCompanionName,
+        games: newCompanionGames,
+        price: Number(newCompanionPrice) || 0,
+        commission_rate: Number(newCompanionCommission) || 70
+      }]);
+      error = insertError;
+    }
+
+    if (error) {
+      console.error("Supabase Data Save Error:", error);
+      alert(`保存失败: ${error.message}`);
+      return;
+    }
+
+    closeModal();
+    fetchCompanions();
   };
 
   return (
@@ -78,12 +129,18 @@ const CompanionManagement = () => {
               companions.map(comp => (
                 <tr key={comp.id}>
                   <td>{comp.name}</td>
-                  <td>{comp.service}</td>
+                  <td>{comp.games}</td>
                   <td>¥{comp.price}</td>
-                  <td>{comp.commission}%</td>
-                  <td><span className="cm-status-badge">{comp.status}</span></td>
+                  <td>{comp.commission_rate}%</td>
+                  <td><span className="cm-status-badge">在线</span></td>
                   <td>
-                    <button className="cm-action-btn">编辑</button>
+                    <button 
+                      className="cm-action-btn"
+                      onClick={() => handleEditClick(comp)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      编辑
+                    </button>
                   </td>
                 </tr>
               ))
@@ -94,11 +151,11 @@ const CompanionManagement = () => {
 
       {/* Modal Overlay */}
       {isModalOpen && (
-        <div className="cm-modal-overlay">
-          <div className="cm-modal-box">
+        <div className="cm-modal-overlay" onClick={closeModal}>
+          <div className="cm-modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="cm-modal-header">
-              <h2>新增陪陪</h2>
-              <button className="cm-close-icon" onClick={() => setIsModalOpen(false)}>
+              <h2>{editingCompanionId ? '编辑陪陪' : '新增陪陪'}</h2>
+              <button className="cm-close-icon" onClick={closeModal}>
                 <CloseIcon />
               </button>
             </div>
@@ -108,9 +165,8 @@ const CompanionManagement = () => {
                 <label>姓名</label>
                 <input 
                   type="text" 
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
+                  value={newCompanionName}
+                  onChange={(e) => setNewCompanionName(e.target.value)}
                   placeholder="请输入姓名" 
                 />
               </div>
@@ -118,9 +174,8 @@ const CompanionManagement = () => {
                 <label>主玩游戏 / 服务</label>
                 <input 
                   type="text" 
-                  name="service"
-                  value={formData.service}
-                  onChange={handleInputChange}
+                  value={newCompanionGames}
+                  onChange={(e) => setNewCompanionGames(e.target.value)}
                   placeholder="王者荣耀 / 语音通话" 
                 />
               </div>
@@ -129,9 +184,8 @@ const CompanionManagement = () => {
                   <label>价格（元/单）</label>
                   <input 
                     type="number" 
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
+                    value={newCompanionPrice}
+                    onChange={(e) => setNewCompanionPrice(e.target.value)}
                     placeholder="50" 
                   />
                 </div>
@@ -139,9 +193,8 @@ const CompanionManagement = () => {
                   <label>默认分成（%）</label>
                   <input 
                     type="number" 
-                    name="commission"
-                    value={formData.commission}
-                    onChange={handleInputChange}
+                    value={newCompanionCommission}
+                    onChange={(e) => setNewCompanionCommission(e.target.value)}
                     placeholder="70" 
                   />
                 </div>
@@ -149,7 +202,7 @@ const CompanionManagement = () => {
             </div>
 
             <div className="cm-modal-footer">
-              <button className="cm-save-btn" onClick={handleSave}>保存</button>
+              <button className="cm-save-btn" onClick={handleAddCompanion}>保存</button>
             </div>
           </div>
         </div>

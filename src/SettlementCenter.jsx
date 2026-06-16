@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { supabase } from './supabaseClient';
 import './SettlementCenter.css';
 
 const getTodayDateString = () => {
@@ -16,12 +17,75 @@ const getCurrentMonthString = () => {
   return `${year}-${month}`;
 };
 
+const getDateRange = (type, start, end, month) => {
+  let sDate, eDate;
+  if (type === 'weekly') {
+    sDate = new Date(`${start}T00:00:00`);
+    eDate = new Date(sDate);
+    eDate.setDate(eDate.getDate() + 7);
+    eDate.setHours(23, 59, 59, 999);
+  } else if (type === 'monthly') {
+    const [year, m] = month.split('-');
+    sDate = new Date(year, parseInt(m) - 1, 1, 0, 0, 0);
+    eDate = new Date(year, parseInt(m), 0, 23, 59, 59, 999);
+  } else {
+    sDate = new Date(`${start}T00:00:00`);
+    eDate = new Date(`${end}T23:59:59`);
+  }
+  return {
+    startDateTimeISO: sDate.toISOString(),
+    endDateTimeISO: eDate.toISOString()
+  };
+};
+
 const SettlementCenter = () => {
   const [settlementType, setSettlementType] = useState('weekly');
   const [startDate, setStartDate] = useState(getTodayDateString());
   const [endDate, setEndDate] = useState(getTodayDateString());
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthString());
   const [settlementData, setSettlementData] = useState([]);
+
+  const calculateSettlement = useCallback(async () => {
+    try {
+      if (!startDate && settlementType === 'weekly') return;
+      if (!selectedMonth && settlementType === 'monthly') return;
+      if ((!startDate || !endDate) && settlementType === 'custom') return;
+
+      const { startDateTimeISO, endDateTimeISO } = getDateRange(settlementType, startDate, endDate, selectedMonth);
+
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .gte('created_at', startDateTimeISO)
+        .lte('created_at', endDateTimeISO);
+
+      if (error) {
+        console.error("Error fetching orders for settlement:", error);
+        return;
+      }
+
+      if (data) {
+        const aggregated = {};
+        data.forEach(order => {
+          const compName = order.companion_name || '未知陪陪';
+          if (!aggregated[compName]) {
+            aggregated[compName] = { companion_name: compName, 接单数: 0, 营业额: 0, 应发工资: 0 };
+          }
+          aggregated[compName].接单数 += 1;
+          aggregated[compName].营业额 += Number(order.amount) || 0;
+          const share = Number(order.companion_share) || 0;
+          aggregated[compName].应发工资 += (Number(order.amount) || 0) * (share / 100);
+        });
+        setSettlementData(Object.values(aggregated));
+      }
+    } catch (err) {
+      console.error("Unexpected error in calculateSettlement:", err);
+    }
+  }, [settlementType, startDate, endDate, selectedMonth]);
+
+  useEffect(() => {
+    calculateSettlement();
+  }, [calculateSettlement]);
 
   const setThisWeek = () => {
     setStartDate(getTodayDateString());
@@ -157,12 +221,12 @@ const SettlementCenter = () => {
             ) : (
               settlementData.map((item, index) => (
                 <tr key={index}>
-                  <td>{item.companion}</td>
-                  <td>{item.game}</td>
-                  <td>{item.orderCount}</td>
-                  <td>¥{item.revenue}</td>
-                  <td>{item.avgRating}</td>
-                  <td>¥{item.payableSalary}</td>
+                  <td>{item.companion_name}</td>
+                  <td>-</td>
+                  <td>{item.接单数}</td>
+                  <td>¥{item.营业额.toFixed(2)}</td>
+                  <td>5.0</td>
+                  <td>¥{item.应发工资.toFixed(2)}</td>
                 </tr>
               ))
             )}

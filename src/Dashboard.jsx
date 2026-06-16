@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import './Dashboard.css';
 
 // SVG Icons
@@ -52,6 +53,72 @@ const MoonIcon = () => (
 );
 
 const Dashboard = () => {
+  const [todayRev, setTodayRev] = useState(0);
+  const [todayCount, setTodayCount] = useState(0);
+  const [weekRev, setWeekRev] = useState(0);
+  const [weekCount, setWeekCount] = useState(0);
+  const [monthRev, setMonthRev] = useState(0);
+  const [monthCount, setMonthCount] = useState(0);
+  const [onlineCompanions, setOnlineCompanions] = useState(0);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const { data: orders } = await supabase.from('orders').select('*');
+        const { data: companions } = await supabase.from('companions').select('*');
+        
+        const validOrders = (orders || []).filter(o => o.status !== '已取消');
+
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfTodayISO = startOfToday.toISOString();
+
+        const startOfWeek = new Date(startOfToday);
+        startOfWeek.setDate(startOfToday.getDate() - startOfToday.getDay());
+        const startOfWeekISO = startOfWeek.toISOString();
+
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfMonthISO = startOfMonth.toISOString();
+
+        let tRev = 0, tCount = 0;
+        let wRev = 0, wCount = 0;
+        let mRev = 0, mCount = 0;
+
+        validOrders.forEach(order => {
+          const createdAt = order.created_at;
+          const amount = Number(order.amount) || 0;
+
+          if (createdAt >= startOfTodayISO) {
+            tRev += amount;
+            tCount++;
+          }
+          if (createdAt >= startOfWeekISO) {
+            wRev += amount;
+            wCount++;
+          }
+          if (createdAt >= startOfMonthISO) {
+            mRev += amount;
+            mCount++;
+          }
+        });
+
+        setTodayRev(tRev);
+        setTodayCount(tCount);
+        setWeekRev(wRev);
+        setWeekCount(wCount);
+        setMonthRev(mRev);
+        setMonthCount(mCount);
+
+        setOnlineCompanions(companions?.length || 0);
+
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
   return (
     <div className="dashboard-container">
       {/* Header Section */}
@@ -65,8 +132,8 @@ const Dashboard = () => {
         <div className="stat-card">
           <div className="stat-content">
             <h3 className="stat-title">今日营业额</h3>
-            <div className="stat-value">¥0.00</div>
-            <div className="stat-subtext">0 单</div>
+            <div className="stat-value">¥{todayRev.toFixed(2)}</div>
+            <div className="stat-subtext">{todayCount} 单</div>
           </div>
           <div className="stat-icon-wrapper bg-light-green text-green">
             <TrendUpIcon />
@@ -76,8 +143,8 @@ const Dashboard = () => {
         <div className="stat-card">
           <div className="stat-content">
             <h3 className="stat-title">本周营业额</h3>
-            <div className="stat-value">¥0.00</div>
-            <div className="stat-subtext">0 单</div>
+            <div className="stat-value">¥{weekRev.toFixed(2)}</div>
+            <div className="stat-subtext">{weekCount} 单</div>
           </div>
           <div className="stat-icon-wrapper bg-light-blue text-blue">
             <CalendarIcon />
@@ -87,8 +154,8 @@ const Dashboard = () => {
         <div className="stat-card">
           <div className="stat-content">
             <h3 className="stat-title">本月营业额</h3>
-            <div className="stat-value">¥0.00</div>
-            <div className="stat-subtext">0 单</div>
+            <div className="stat-value">¥{monthRev.toFixed(2)}</div>
+            <div className="stat-subtext">{monthCount} 单</div>
           </div>
           <div className="stat-icon-wrapper bg-light-blue text-blue">
             <CalendarIcon />
@@ -98,7 +165,7 @@ const Dashboard = () => {
         <div className="stat-card">
           <div className="stat-content">
             <h3 className="stat-title">今日订单数</h3>
-            <div className="stat-value">0</div>
+            <div className="stat-value">{todayCount}</div>
             <div className="stat-subtext">-</div>
           </div>
           <div className="stat-icon-wrapper bg-light-purple text-purple">
@@ -115,7 +182,7 @@ const Dashboard = () => {
         <div className="stat-card">
           <div className="stat-content">
             <h3 className="stat-title">在线陪陪</h3>
-            <div className="stat-value">0</div>
+            <div className="stat-value">{onlineCompanions}</div>
           </div>
           <div className="stat-icon-wrapper bg-light-green text-green">
             <UsersIcon />
